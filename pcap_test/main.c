@@ -2,32 +2,45 @@
 
 #include <stdio.h>
 #include <pcap.h>
-#include <libnet.h>
 #include "pcap_test.h"
 
 int main()
 {
 	int index = 1;
 	pcap_t *handle;			//Session handle
-	char *dev;			//The device to sniff on
+	char dev[] = "eth0";		//The device to sniff on
 	char errbuf[PCAP_ERRBUF_SIZE];	//Error string
-	struct bpf_program fp;		//The compiled filter
-	char filter_ex[] = "port 23";	//The filter expression
 	bpf_u_int32 mask;		//Our netmask
 	bpf_u_int32 net;		//our IP
 	struct pcap_pkthdr header;	//The header that pcap gives us
 	const u_char *packet;		//The actual packet
+
+	if (pcap_lookupnet(dev, &net, &mask, errbuf) == -1)
+	{
+		fprintf(stderr, "Couldn't get netmask for device %s: %s\n", dev, errbuf);
+		net = 0;
+		mask = 0;
+	}
+
+	handle = pcap_open_live(dev, BUFSIZ, 1, 1000, errbuf);
+
+	if (handle == NULL)
+	{
+		fprintf(stderr, "Couldn't oupen device %s: %s\n", dev, errbuf);
+		return(2);
+	}
 	
 	packet = pcap_next_ex(handle, &headeR);
 	while(packet)
 	{
-
 		pritnf("Sniffing Packet No. %d!\n", index);
 		pcap_test(packet);
 	
 		packet = pcap_next_ex(handle, &header);
 		index++;
 	}
+
+	pcap_close(handle);
 
 	return 0;
 }
