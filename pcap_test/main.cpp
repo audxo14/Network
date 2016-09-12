@@ -2,17 +2,19 @@
 
 #include <stdio.h>
 #include <pcap.h>
+#include <libnet.h>
 #include "pcap_test.h"
 
 int main()
 {
 	int index = 1;
+	int result;
 	pcap_t *handle;			//Session handle
 	char dev[] = "eth0";		//The device to sniff on
 	char errbuf[PCAP_ERRBUF_SIZE];	//Error string
 	bpf_u_int32 mask;		//Our netmask
 	bpf_u_int32 net;		//our IP
-	struct pcap_pkthdr header;	//The header that pcap gives us
+	struct pcap_pkthdr *header;	//The header that pcap gives us
 	const u_char *packet;		//The actual packet
 
 	if (pcap_lookupnet(dev, &net, &mask, errbuf) == -1)
@@ -30,17 +32,31 @@ int main()
 		return(2);
 	}
 	
-	packet = pcap_next_ex(handle, &headeR);
-	while(packet)
+	result = pcap_next_ex(handle, &header, &packet);
+
+	printf("Sniffing Packet No. %d!\n", index);
+
+	struct libnet_ethernet_hdr *eh;
+	eh = (struct libnet_ethernet_hdr *)packet;
+	unsigned short eth_type;
+	eth_type = ntohs(eh->ether_type);
+	
+	//printf("%x\n", eth_type);
+	pcap_test(packet);
+	index++;
+	
+	/*
+	while(result >= 0 || index <= 10)
 	{
-		pritnf("Sniffing Packet No. %d!\n", index);
+		printf("Sniffing Packet No. %d!\n", index);
 		pcap_test(packet);
 	
-		packet = pcap_next_ex(handle, &header);
+		result = pcap_next_ex(handle, &header, &packet);
 		index++;
 	}
-
+	*/
 	pcap_close(handle);
 
 	return 0;
 }
+
