@@ -8,7 +8,7 @@
 int main()
 {
 	int index = 1;
-	int result;
+	int result;			
 	pcap_t *handle;			//Session handle
 	char dev[] = "eth0";		//The device to sniff on
 	char errbuf[PCAP_ERRBUF_SIZE];	//Error string
@@ -35,26 +35,16 @@ int main()
 	result = pcap_next_ex(handle, &header, &packet);
 
 	printf("Sniffing Packet No. %d!\n", index);
-
-	struct libnet_ethernet_hdr *eh;
-	eh = (struct libnet_ethernet_hdr *)packet;
-	unsigned short eth_type;
-	eth_type = ntohs(eh->ether_type);
-	
-	//printf("%x\n", eth_type);
-	pcap_test(packet);
-	index++;
-	
-	/*
-	while(result >= 0 || index <= 10)
+		
+	while(result >= 0)
 	{
-		printf("Sniffing Packet No. %d!\n", index);
+		printf("\nSniffing Packet No. %d!\n", index);
 		pcap_test(packet);
 	
 		result = pcap_next_ex(handle, &header, &packet);
 		index++;
 	}
-	*/
+
 	pcap_close(handle);
 
 	return 0;
