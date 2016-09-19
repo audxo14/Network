@@ -36,11 +36,12 @@ int main()
 
 	printf("Sniffing Packet No. %d!\n", index);
 		
-	while(result >= 0)
+	while(result > 0)	// If the packet was read without problems, return 1
 	{
 		printf("\nSniffing Packet No. %d!\n", index);
 		pcap_test(packet);
 	
+		// Result value is 0, it means the timeout expired.
 		result = pcap_next_ex(handle, &header, &packet);
 		index++;
 	}

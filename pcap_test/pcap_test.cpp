@@ -30,7 +30,7 @@ void pcap_test(const u_char *packet)
 	}
 	printf("\n");	
 	
-	if (ntohs(eth_hdr->ether_type) == 0x0800)		//If it is Ethernet
+	if (ntohs(eth_hdr->ether_type) == 0x0800)		//If it is IP
 	{
 		printf("\nThe next header  is IP header!!!\n");
 
