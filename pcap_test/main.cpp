@@ -34,8 +34,6 @@ int main()
 	
 	result = pcap_next_ex(handle, &header, &packet);
 
-	printf("Sniffing Packet No. %d!\n", index);
-		
 	while(result > 0)	// If the packet was read without problems, return 1
 	{
 		printf("\nSniffing Packet No. %d!\n", index);
@@ -45,6 +43,8 @@ int main()
 		result = pcap_next_ex(handle, &header, &packet);
 		index++;
 	}
+
+	printf("There is no more packet to sniff!\n");
 
 	pcap_close(handle);
 

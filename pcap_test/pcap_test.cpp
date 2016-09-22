@@ -5,10 +5,10 @@
 
 void pcap_test(const u_char *packet)
 {
-	const struct libnet_ethernet_hdr *eth_hdr;
-	const struct libnet_ipv4_hdr *ip_hdr;
-	const struct in_addr *ip_addr;
-	const struct libnet_tcp_hdr *tcp_hdr;	
+	const struct libnet_ethernet_hdr *eth_hdr;		//struct for ehternet header
+	const struct libnet_ipv4_hdr *ip_hdr;			//struct for ipv4 header
+	const struct in_addr *ip_addr;				//struct for ip address
+	const struct libnet_tcp_hdr *tcp_hdr;			//struct for tcp header
 
 	eth_hdr = (struct libnet_ethernet_hdr *)packet;
 	
@@ -16,7 +16,7 @@ void pcap_test(const u_char *packet)
 
         for (int i = 0; i < 6; i++)
         {
-                printf("%02x",eth_hdr->ether_shost[i]);
+                printf("%02x", eth_hdr->ether_shost[i]);
                 if(i < 5)
                         printf(".");
         }
@@ -24,7 +24,7 @@ void pcap_test(const u_char *packet)
 	printf("\nDestionation MAC Address: ");
 	for (int i = 0; i < 6; i++)
 	{
-		printf("%02x",eth_hdr->ether_dhost[i]);
+		printf("%02x", eth_hdr->ether_dhost[i]);
 		if(i < 5)
 			printf(".");
 	}
@@ -34,16 +34,16 @@ void pcap_test(const u_char *packet)
 	{
 		printf("\nThe next header  is IP header!!!\n");
 
-		unsigned int eth_size = sizeof(struct libnet_ethernet_hdr);			//ethernet header size
-	        ip_hdr = (struct libnet_ipv4_hdr *)(packet + eth_size);				//pointer for ip header
+		unsigned int eth_size = sizeof(struct libnet_ethernet_hdr);	//ethernet header size
+	        ip_hdr = (struct libnet_ipv4_hdr *)(packet + eth_size);		//pointer for ip header
 		printf("IP source Address: %s\n",inet_ntoa(ip_hdr->ip_src));
 		printf("IP Destination Address: %s\n", inet_ntoa(ip_hdr->ip_dst));
 
 		if (ip_hdr->ip_p == 6)				//If its protocol is TCP
 		{
 			printf("\nThe protocol is TCP!!\n");
-			unsigned int iph_size = (ip_hdr->ip_hl) * 4;				//ip header size
-			unsigned int tcph_size = (tcp_hdr->th_off) * 4;				//tcp header size
+			unsigned int iph_size = (ip_hdr->ip_hl) * 4;			//ip header size
+			unsigned int tcph_size = (tcp_hdr->th_off) * 4;			//tcp header size
 			unsigned int packet_size = ntohs(ip_hdr->ip_len) - iph_size - tcph_size; //payload size
 			
 			tcp_hdr = (struct libnet_tcp_hdr *)(packet + eth_size + iph_size);	//pointer for tcp header
