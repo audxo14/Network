@@ -18,8 +18,8 @@ int main()
 	struct in_addr addr;
 	char buf[32];
 	char victim_ip[32];
-	
 	char iface[] = "eth0";
+	unsigned char *mac;
 
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
 
@@ -28,8 +28,6 @@ int main()
 	strncpy(ifr.ifr_name, iface, IFNAMSIZ-1);
 
 	ioctl(fd, SIOCGIFADDR, &ifr);
-	
-	close(fd);
 
 	puts("IP address of the target : ");
 	fgets(victim_ip, sizeof(victim_ip), stdin);
@@ -37,12 +35,18 @@ int main()
 	//addr.s_addr = &ifr.ifr_addr// -> sin_addr;
 
 	printf("Your device is %s", iface);
-	for (int i = 0; i< 6; i++)
-		printf("%.2x.", (unsigned char)ifr.ifr_hwaddr.sa_data[i]);
-	//printf("Mac Address: %s", ether_ntoa((struct ether_addr *)ifr.ifr_hwaddr.sa_data));
-	//printf("Your Mac address: %s\n", &(((struct sockaddr_in *)&ifr.ifr_hwaddr) ->
+	
+
+        ioctl(fd, SIOCGIFHWADDR, &ifr);
+	mac = (unsigned char *)ifr.ifr_hwaddr.sa_data;
+	printf("Your MAC address: %02x:%02x:%02x:%02x:%02x:%02x\n",
+		mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	
+        ioctl(fd, SIOCGIFADDR, &ifr);
+
 	printf("Your IP address: %s\n", inet_ntop(AF_INET, &(((struct sockaddr_in *)&ifr.ifr_addr) -> sin_addr), buf, sizeof(buf)));
 	printf("%s", victim_ip);
 
+	close(fd);
 	return 0;
 }
