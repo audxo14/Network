@@ -22,7 +22,9 @@ int main()
 	char victim_ip[34];
 	char iface[] = "eth0";
 	u_char *s_mac;
+
 	struct in_addr s_ip;
+	struct in_addr d_ip;
 
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
 
@@ -31,8 +33,20 @@ int main()
 	strncpy(ifr.ifr_name, iface, IFNAMSIZ-1);
 
 	puts("IP address of the target : ");
-	fgets(victim_ip, sizeof(victim_ip), stdin);
-	victim_ip[strlen(victim_ip) - 1] = '\0';
+	
+	while(1)
+	{
+		fgets(victim_ip, sizeof(victim_ip), stdin);
+		victim_ip[strlen(victim_ip) - 1] = '\0';
+	
+		if(inet_pton(AF_INET, victim_ip, &d_ip.s_addr) == 0)
+		{
+			printf("Invalid IP address! \n");
+			continue;
+		}
+		else
+			break;
+	}
 
 	printf("\nMy Network Status: \n");
 	printf("Device: %s\n", iface);
@@ -57,7 +71,7 @@ int main()
 
 	printf("\nVictim Network Status: \n");
 
-	send_arp(victim_ip, s_mac, s_ip);
+	send_arp(s_mac, s_ip, d_ip);
 	
 	close(fd);
 	free(s_mac);
