@@ -76,7 +76,7 @@ int main()
 
 	printf("\nVictim Network Status: \n");
 
-	send_arp(s_mac, d_mac, s_ip, d_ip, handle);
+	arp_main(s_mac, d_mac, s_ip, d_ip, handle);
 	//packet_spoof(s_mac, d_mac, s_ip, d_ip, handle);
 	
 	close(fd);
