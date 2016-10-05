@@ -23,5 +23,6 @@ void packet_spoof(u_char *s_mac, u_char *d_mac, struct in_addr s_ip, struct in_a
 		else if(memcmp(s_mac, eth_hdr -> ether_dhost, ETHER_ADDR_LEN))
 			continue;
 
-	}		
+	}	
+		
 }

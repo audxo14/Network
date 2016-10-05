@@ -23,6 +23,7 @@ int main()
 	char victim_ip[INET_ADDRSTRLEN];
 	char iface[] = "eth0";
 	pcap_t *handle = NULL;
+	u_char *packet;
 	u_char *s_mac;
 	u_char *d_mac;
 
