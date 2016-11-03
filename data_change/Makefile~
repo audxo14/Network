@@ -1,0 +1,7 @@
+all: test
+
+test: test.o
+	g++ -o test test.o -lnetfilter_queue
+
+test.o: nfqnl_test.c
+	g++ -c -o test.o nfqnl_test.c
